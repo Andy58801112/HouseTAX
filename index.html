@@ -1,0 +1,149 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>房地合一稅計算器（萬元）</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 14px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      font-weight: bold;
+      background-color: #3c82f6;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .result {
+      margin-top: 24px;
+      background: #f4f4f4;
+      padding: 15px;
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <h2>房地合一稅計算器（萬元）</h2>
+
+  <!-- 基本欄位 -->
+  <label>賣出價格（萬元）
+    <input type="number" id="sellPrice" />
+  </label>
+
+  <label>買入價格（萬元）
+    <input type="number" id="buyPrice" />
+  </label>
+
+  <!-- 相關規費合併欄 -->
+  <label>相關規費（買/賣仲介費、代書費、履約保證費用、裝修費用，單位：萬元）
+    <input type="number" id="relatedFees" />
+  </label>
+
+  <!-- 土地漲價總數額 -->
+  <label>申報土地移轉現值（每㎡，萬元）
+    <input type="number" id="currentValue" />
+  </label>
+
+  <label>前次移轉現值（每㎡，萬元）
+    <input type="number" id="previousValue" />
+  </label>
+
+  <label>土地面積（㎡）
+    <input type="number" id="landArea" />
+  </label>
+
+  <label>CPI 漲幅百分比（例如：15 請輸入 15）
+    <input type="number" id="cpiRate" />
+  </label>
+
+  <!-- 稅率選擇 -->
+  <label>持有年限應繳稅額
+    <select id="taxRateSelect">
+      <option value="0.45">2年以下（45%）</option>
+      <option value="0.35">2-5年（35%）</option>
+      <option value="0.20">5-10年（20%）</option>
+      <option value="0.15">10年以上（15%）</option>
+    </select>
+  </label>
+
+  <!-- 是否符合6年自用 -->
+  <label>
+    <input type="checkbox" id="selfUse6Y" />
+    符合自用住宅持有6年以上，適用課稅所得額400萬元內免稅，超出部分課10%
+  </label>
+
+  <button onclick="calculate()">計算房地合一稅</button>
+
+  <div class="result" id="resultBox"></div>
+
+  <script>
+    function calculate() {
+      const sell = Number(document.getElementById("sellPrice").value);
+      const buy = Number(document.getElementById("buyPrice").value);
+      const relatedFees = Number(document.getElementById("relatedFees").value);
+
+      const currentValue = Number(document.getElementById("currentValue").value);
+      const previousValue = Number(document.getElementById("previousValue").value);
+      const area = Number(document.getElementById("landArea").value);
+      const cpi = Number(document.getElementById("cpiRate").value) / 100;
+
+      const isSelfUse6Y = document.getElementById("selfUse6Y").checked;
+      const selectedTaxRate = Number(document.getElementById("taxRateSelect").value);
+
+      const totalFees = relatedFees;
+
+      // 土地漲價總數額計算 (修正公式)
+      const a = currentValue * area;
+      const b = previousValue * area;
+      const c = cpi;
+
+      const landIncrement = a - b * c;
+
+      const taxableIncome = sell - buy - totalFees - landIncrement;
+
+      let taxAmount = 0;
+
+      if (taxableIncome <= 0) {
+        taxAmount = 0;
+      } else if (isSelfUse6Y) {
+        if (taxableIncome <= 400) {
+          taxAmount = 0;
+        } else {
+          taxAmount = (taxableIncome - 400) * 0.10;
+        }
+      } else {
+        taxAmount = taxableIncome * selectedTaxRate;
+      }
+
+      document.getElementById("resultBox").innerHTML = `
+        <strong>相關規費總額：</strong> ${totalFees.toFixed(2)} 萬元<br>
+        <strong>土地漲價總數額：</strong> ${landIncrement.toFixed(2)} 萬元<br>
+        <strong>課稅所得額：</strong> ${taxableIncome.toFixed(2)} 萬元<br>
+        <strong>應納稅額：</strong> ${taxAmount.toFixed(2)} 萬元
+      `;
+    }
+  </script>
+</body>
+</html>
